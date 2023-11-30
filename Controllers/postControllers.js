@@ -290,3 +290,122 @@ export const downvotePost = async (req, res, next) => {
     res.status(400).send(error.message);
   }
 };
+
+// Code to add comments to the post
+export const addCommentToPost = async (req, res, next) => {
+  try {
+    const postId = req.params.id; 
+    const comment = req.body; 
+
+    // Logic to find and add a comment to the post in the database
+    const postRef = doc(db, 'posts', postId);
+    const postData = await getDoc(postRef);
+
+    if (postData.exists()) {
+      // Generate a random 10-digit number as the comment ID
+      const commentId = Math.floor(1000000000 + Math.random() * 9000000000); 
+
+      // Fetch the updated post data
+      const currentComments = postData.data().comments || [];
+      const newComment = { ...comment, id: commentId }; // Include the generated comment ID
+
+      const updatedComments = [...currentComments, newComment];
+
+      await updateDoc(postRef, {
+        ...postData.data(),
+        comments: updatedComments,
+      });
+
+      // Fetch the updated post data
+      const updatedPostData = await getDoc(postRef);
+
+      // Create a new Post instance with the updated data
+      const updatedPost = new Post(
+        updatedPostData.data().id,
+        updatedPostData.data().title,
+        updatedPostData.data().content,
+        updatedPostData.data().author,
+        updatedPostData.data().authorId,
+        updatedPostData.data().authorUsername,
+        updatedPostData.data().votes,
+        updatedPostData.data().comments || [],
+      );
+
+      res.status(200).send(updatedPost);
+    } else {
+      res.status(404).send('Post not found');
+    }
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+};
+
+
+// Code upvote an existing comment
+export const upvoteComment = async (req, res, next) => {
+try {
+  const postId = req.params.postId; 
+  const commentId = req.params.commentId; 
+
+  // Logic to find and upvote the comment in the database
+  const postRef = doc(db, 'posts', postId);
+  const postData = await getDoc(postRef);
+
+  if (postData.exists()) {
+    const currentComments = postData.data().comments || [];
+    const updatedComments = currentComments.map((existingComment) => {
+      console.log(existingComment.id)
+      if (existingComment.id.toString() === commentId) {
+        existingComment.votes += 1; // Increase the votes for upvote
+      }
+      return existingComment;
+    });
+    await updateDoc(postRef, {
+      ...postData.data(),
+      comments: updatedComments,
+    });
+
+    res.status(200).send('Comment upvoted successfully');
+  } else {
+    res.status(404).send('Post not found');
+  }
+} catch (error) {
+  res.status(400).send(error.message);
+}
+};
+
+
+// Code to downvote and existing comment
+export const downvoteComment = async (req, res, next) => {
+try {
+  const postId = req.params.postId; 
+  const commentId = req.params.commentId; 
+
+  // Logic to find and downvote the comment in the database
+  const postRef = doc(db, 'posts', postId);
+  const postData = await getDoc(postRef);
+
+  if (postData.exists()) {
+    const currentComments = postData.data().comments || [];
+    const updatedComments = currentComments.map((existingComment) => {
+      console.log(existingComment.id)
+      if (existingComment.id.toString() === commentId) {
+        existingComment.votes -= 1; // Decrease the votes for downvote
+      }
+      return existingComment;
+    });
+
+    await updateDoc(postRef, {
+      ...postData.data(),
+      comments: updatedComments,
+    });
+
+    res.status(200).send('Comment downvoted successfully');
+  } else {
+    res.status(404).send('Post not found');
+  }
+} catch (error) {
+  res.status(400).send(error.message);
+}
+};
+
