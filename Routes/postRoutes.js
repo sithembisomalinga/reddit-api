@@ -8,6 +8,7 @@ const router = express.Router();
 
 router.get('/', getPosts);
 router.post('/new', createPost);
+router.get('/post/:id', getPost);
 
 
 export default router;
