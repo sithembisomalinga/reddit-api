@@ -181,3 +181,112 @@ export const getUserPosts = async (req, res, next) => {
     res.status(400).send(error.message);
   }
 };
+
+// Code to upvote a post
+export const upvotePost = async (req, res, next) => {
+  try {
+    const postId = req.params.id; 
+    const userId = req.body.userId; 
+
+    // Logic to find and upvote the post in the database
+    const postRef = doc(db, 'posts', postId);
+    const postData = await getDoc(postRef);
+
+    if (postData.exists()) {
+      // Check if the user has already upvoted the post
+      const upvotersList = postData.data().upvoters || [];
+
+      if (upvotersList.includes(userId)) {
+        // If the user has already upvoted, send a response indicating so
+        return res.status(400).send('User has already upvoted this post');
+      }
+
+      const updatedUpvotersList = [...upvotersList, userId];
+      const currentUpvotes = postData.data().votes;
+      const newUpvotes = currentUpvotes + 1;
+
+      await updateDoc(postRef, {
+        ...postData.data(),
+        votes: newUpvotes,
+        upvoters: updatedUpvotersList,
+      });
+
+      // Fetch the updated post data
+      const updatedPostData = await getDoc(postRef);
+
+      // Create a new Post instance with the updated data
+      const updatedPost = new Post(
+        updatedPostData.data().id,
+        updatedPostData.data().title,
+        updatedPostData.data().content,
+        updatedPostData.data().author,
+        updatedPostData.data().authorId,
+        updatedPostData.data().authorUsername,
+        updatedPostData.data().votes,
+        updatedPostData.data().comments || [],
+      );
+
+      res.status(200).send(updatedPost);
+    } else {
+      res.status(404).send('Post not found');
+    }
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+};
+
+// code to downvote a post
+export const downvotePost = async (req, res, next) => {
+  try {
+    const postId = req.params.id; 
+    const userId = req.body.userId; 
+
+    // Logic to find and downvote the post in the database
+    const postRef = doc(db, 'posts', postId);
+    const postData = await getDoc(postRef);
+
+    if (postData.exists()) {
+      // Check if the user has upvoted the post
+      const upvotersList = postData.data().upvoters || [];
+
+      if (!upvotersList.includes(userId)) {
+        // If the user hasn't upvoted, send an error response
+        return res.status(400).send('User must have upvoted to be able to downvote');
+      }
+
+      // Remove the user ID from the upvoters list
+      const updatedUpvotersList = upvotersList.filter((id) => id !== userId);
+
+      // Update the post by decrementing the votes and removing the user from upvoters
+      const currentDownvotes = postData.data().votes;
+      const newDownvotes = currentDownvotes - 1;
+
+      await updateDoc(postRef, {
+        ...postData.data(),
+        votes: newDownvotes,
+        upvoters: updatedUpvotersList,
+      });
+
+     
+      const updatedPostData = await getDoc(postRef);
+
+      // Create a new Post instance with the updated data
+      const updatedPost = new Post(
+        updatedPostData.data().id,
+        updatedPostData.data().title,
+        updatedPostData.data().content,
+        updatedPostData.data().author,
+        updatedPostData.data().authorId,
+        updatedPostData.data().authorUsername,
+        updatedPostData.data().votes,
+        updatedPostData.data().comments || [],
+      );
+
+      res.status(200).send(updatedPost);
+    } else {
+      res.status(404).send('Post not found');
+    }
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+};
