@@ -409,3 +409,42 @@ try {
 }
 };
 
+export const getUpvotedPostsByUser = async (req, res, next) => {
+  try {
+    const userId = req.params.userId; // Get user ID from request parameters
+    const posts = await getDocs(collection(db, 'posts'));
+    const postArray = []; 
+    if (posts.empty) {
+      res.status(400).send('No Posts found');
+    } else {
+      posts.forEach((doc) => {
+        const post = new Post(
+          doc.data().id,
+          doc.data().title,
+          doc.data().content,
+          doc.data().author,
+          doc.data().authorId,
+          doc.data().authorUsername,
+          doc.data().votes, 
+          doc.data().upvoters,
+          doc.data().comments || [], 
+        );
+        postArray.push(post);
+      });
+    }
+    // Logic to retrieve posts upvoted by the user from your database
+    const upvotedPosts = []; // Array to store posts upvoted by the user
+    // Fetch posts based on the user's ID present in the upvoters list
+    const allPosts = postArray; 
+    console.log(allPosts);
+    allPosts.forEach((post) => {
+      if (post.upvoters && post.upvoters.includes(userId)) {
+        upvotedPosts.push(post);
+      }
+    });
+
+    res.status(200).send(upvotedPosts);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+  }

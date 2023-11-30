@@ -13,7 +13,6 @@ import {
   upvoteComment,
   downvoteComment,
   getUpvotedPostsByUser,
-  getDownvotedPostsByUser,
 } from '../Controllers/postControllers.js';
 
 
@@ -30,6 +29,6 @@ router.post('/post/downvote/:id', downvotePost);
 router.post('/post/comment/:id', addCommentToPost);
 router.post('/post/:postId/comment/:commentId/upvote', upvoteComment);
 router.post('/post/:postId/comment/:commentId/downvote', downvoteComment);
-
+router.get('/user/:userId/upvoted-posts', getUpvotedPostsByUser);
 
 export default router;
