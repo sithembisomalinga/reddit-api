@@ -91,3 +91,38 @@ export const createPost = async (req, res, next) => {
     res.status(400).send(error.message);
   }
 };
+
+// Code to update a post 
+export const updatePost = async (req, res, next) => {
+  try {
+    const postId = req.params.id;
+    const updatedData = req.body;
+
+    const postRef = doc(db, 'posts', postId);
+    const postData = await getDoc(postRef);
+
+    if (postData.exists()) {
+      await updateDoc(postRef, updatedData);
+
+      // Fetch the updated post data
+      const updatedPostData = await getDoc(postRef);
+
+    const updatedPost = new Post(
+      updatedPostData.data().id,
+      updatedPostData.data().title,
+      updatedPostData.data().content,
+      updatedPostData.data().author,
+      updatedPostData.data().authorId,
+      updatedPostData.data().authorUsername,
+      updatedPostData.data().votes,
+      updatedPostData.data().comments || [],
+    );
+
+    res.status(200).send(updatedPost);
+  } else {
+    res.status(404).send('Post not found');
+  }
+} catch (error) {
+  res.status(400).send(error.message);
+}
+};
