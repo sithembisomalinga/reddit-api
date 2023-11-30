@@ -4,10 +4,14 @@ import Post from '../Models/postModel.js';
 import {
   getFirestore,
   collection,
+  doc,
   addDoc,
-  updateDoc,
+  getDoc,
   getDocs,
-  collection,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
 } from 'firebase/firestore';
 
 const db = getFirestore(firebase);
@@ -60,3 +64,30 @@ export const createPost = async (req, res, next) => {
       res.status(400).send(error.message);
     }
   };
+
+  // Code to get post by ID from database
+  export const getPost = async (req, res, next) => {
+    try {
+      const postId = req.params.id;
+      const postRef = doc(db, 'posts', postId);
+      const postData = await getDoc(postRef);
+  
+      if (postData.exists()) {
+        const post = new Post(
+          postData.data().id,
+          postData.data().title,
+          postData.data().content,
+          postData.data().author,
+          postData.data().authorId,
+          postData.data().authorUsername,
+          postData.data().votes,
+          postData.data().comments || [],
+        );
+        res.status(200).send(post);
+    } else {
+      res.status(404).send('Post not found');
+    }
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+};
