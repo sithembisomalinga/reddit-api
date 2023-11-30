@@ -126,3 +126,22 @@ export const updatePost = async (req, res, next) => {
   res.status(400).send(error.message);
 }
 };
+
+// Code to delete post from database
+export const deletePost = async (req, res, next) => {
+  try {
+    const postId = req.params.id;
+
+    const postRef = doc(db, 'posts', postId);
+    const postData = await getDoc(postRef);
+
+    if (postData.exists()) {
+      await deleteDoc(postRef);
+      res.status(200).send('Post deleted successfully');
+    } else {
+      res.status(404).send('Post not found');
+    }
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+};
