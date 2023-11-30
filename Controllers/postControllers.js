@@ -145,3 +145,39 @@ export const deletePost = async (req, res, next) => {
     res.status(400).send(error.message);
   }
 };
+
+// Code for getting post from specific user using their user id
+export const getUserPosts = async (req, res, next) => {
+  try {
+    const userId = req.params.userId; 
+    
+    // Query posts collection to get posts created by the user
+    const collectionRef = collection(db, 'posts');
+    const  q = query(collectionRef,where('authorId', '==', userId) );
+
+    const userPostsSnapshot = await getDocs(q);
+
+    if (userPostsSnapshot.empty) {
+      res.status(404).send('No posts found for this user');
+    } else {
+      const userPosts = [];
+      userPostsSnapshot.forEach((doc) => {
+        const postData = doc.data();
+        const post = new Post(
+          postData.data().id,
+          postData.title,
+          postData.content,
+          postData.author,
+          postData.data().authorId,
+          postData.data().authorUsername,
+          postData.votes,
+          postData.comments || []
+        );
+        userPosts.push(post);
+      });
+      res.status(200).send(userPosts);
+    }
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+};
